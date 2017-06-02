@@ -2,3 +2,4 @@ datas.json
 token_*
 logs
 vendor
+*.pem
