@@ -8,17 +8,38 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Lcobucci\JWT\Signer\Rsa\Sha256;
-use Lcobucci\JWT\Signer\key;
-use Lcobucci\JWT\Parser;
-use Lcobucci\JWT\ValidationData;
+
 
 $app = new Application();
 $app->register(new \Silex\Provider\MonologServiceProvider(), ['monolog.logfile' => __DIR__.'/../logs/server.log']);
-
-$clientKeyList = [
-    'localhost' => ['pem'=>'file://'.__DIR__.'/../public.pem', 'scope'=>['list', 'add']],
+$app->register(new \Silex\Provider\SecurityServiceProvider(), ['security.firewalls' => [
+        'api'=> [
+            'pattern' => '/api/',
+            'users' => function () use ($app) {
+                return $app['userProvider'];
+            },
+            'guard' => array(
+                'authenticators' => array(
+                    'app.jwtoken_authenticator'
+                ),
+            ),
+            'stateless'=>true,
+            'anonymous' => false,
+        ]
+    ]]);
+$app['clientKeyList'] = [
+    'localhost' => ['pem'=>'file://'.__DIR__.'/../public.pem', 'roles'=>['ROLE_LIST', 'ROLE_ADD']],
 ];
+$app['userProvider'] = (function ($app) {
+    return new \JWT\Server\UserProvider($app['clientKeyList']);
+});
+
+$app['app.jwtoken_authenticator'] = function ($app) {
+    return new \JWT\Security\JWTokenAuthenticator($app['logger']);
+};
+
+$app['route_class'] = 'JWT\MyRoute';
+
 
 $liste = [['name'=> 'element 1'], ['name'=> 'element 2'], ['name'=> 'element 3']];
 if (file_exists(__DIR__.'/../datas.json')) {
@@ -27,7 +48,7 @@ if (file_exists(__DIR__.'/../datas.json')) {
 
 $app->get('/api/list', function (Request $request) use (&$liste) {
     return new JsonResponse($liste);
-});
+})->secure('ROLE_LIST');
 
 $app->get('/api/add/{name}', function (Request $request, $name) use (&$liste) {
     if ($request->attributes->get('jwt')->getClaim('name') != $name) {
@@ -36,31 +57,8 @@ $app->get('/api/add/{name}', function (Request $request, $name) use (&$liste) {
     $data = ['name' => $name];
     $liste[] = $data;
     return new JsonResponse($data);
-});
+})->secure('ROLE_ADD');
 
-$app->before(function (Request $request, Application $app) use ($clientKeyList) {
-    if (! $authorization = $request->headers->get('Authorization')) {
-        $app['logger']->info('Token invalid header authorization');
-        throw new UnauthorizedHttpException("Bad token", 1);
-    }
-    $element = explode(' ', $authorization);
-    $signer = new Sha256();
-    $token = (new Parser())->parse($element[1]);
-
-    if (!$token->verify($signer, new Key($clientKeyList[$token->getClaim('iss')]['pem']))) {
-        $app['logger']->info('Token invalid signature', ['iss'=>$token->getClaim('iss')]);
-        throw new UnauthorizedHttpException("Bad token", 1);
-    }
-    $data = new ValidationData();
-    $data->setAudience('http://127.0.0.1:8000');
-    
-    if (!$token->validate($data)) {
-        $app['logger']->info('Token invalid datas', ['iss'=>$token->getClaim('iss')]);
-        throw new UnauthorizedHttpException("Bad token", 1);
-    }
-    $app['logger']->info('Token valid', ['iss'=>$token->getClaim('iss')]);
-    $request->attributes->set('jwt', $token);
-}, Application::EARLY_EVENT);
 
 $app->run();
 file_put_contents(__DIR__.'/../datas.json', json_encode($liste));
