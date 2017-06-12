@@ -27,3 +27,11 @@ This component can use the standard flow for authenticate and allow access to re
 The JWT token is set into the request. You can get it for add custom access check between Token content and request content.
 For get the token `$request->attributes->get('jwt');`. The token is an `Lcobucci\JWT\Token` instance.
 
+## Launch server
+
+Open terminal (Unix) or command line (Windows) and go to `server` folder. Run this command for launch the PHP integrated Web Server `php -S 127.0.0.1:8000`
+
+## Run Client
+
+Open another terminal (Unix) or command line (Windows) and go to `client` folder. Run this command for launch client query `php client.php`.
+
