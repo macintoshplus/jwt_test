@@ -15,7 +15,7 @@ $key = new Key('file://'.__DIR__.'/../privkey.pem', 'toto');
 
 $signer = new Sha256();
 
-$token = (new Builder())->setIssuer('localhost') // Configures the issuer (iss claim)
+$token = (new Builder())->setIssuer('localhost1') // Configures the issuer (iss claim)
                         ->setAudience('http://127.0.0.1:8000') // Configures the audience (aud claim)
                         ->setId('4f1g23a12aa', true) // Configures the id (jti claim), replicating as a header item
                         ->setIssuedAt(time()) // Configures the time that the token was issue (iat claim)
@@ -25,11 +25,13 @@ $token = (new Builder())->setIssuer('localhost') // Configures the issuer (iss c
                         ->sign($signer, $key)
                         ->getToken(); // Retrieves the generated token
 
-$client = new \GuzzleHttp\Client();
+$client = new \GuzzleHttp\Client(['http_errors'=>false]);
 
 $response = $client->get('http://127.0.0.1:8000/api/list', ['headers'=>['Accept'=>'application/json', 'Authorization'=>sprintf('Bearer %s', (string) $token)]]);
 if ($response->getStatusCode() == 200) {
     echo "OK : ", $response->getBody(),"\n";
+} else {
+    echo "KO : ", $response->getStatusCode(), " : ",$response->getBody(),"\n";
 }
 
 $name = 'test '.uniqid();
@@ -46,6 +48,8 @@ $token = (new Builder())->setIssuer('localhost') // Configures the issuer (iss c
 $response = $client->get('http://127.0.0.1:8000/api/add/'.$name, ['headers'=>['Accept'=>'application/json', 'Authorization'=>sprintf('Bearer %s', (string) $token)]]);
 if ($response->getStatusCode() == 200) {
     echo "OK : ", $response->getBody(),"\n";
+} else {
+    echo "KO : ", $response->getStatusCode(), " : ",$response->getBody(),"\n";
 }
 
 
