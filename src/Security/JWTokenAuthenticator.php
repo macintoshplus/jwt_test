@@ -1,6 +1,7 @@
 <?php
 
 namespace JWT\Security;
+
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -29,16 +30,23 @@ class JWTokenAuthenticator extends AbstractGuardAuthenticator
             $this->logger->warning('No Authorization header');
             return;
         }
+        // Read part from header
         $element = explode(' ', $authorization);
+        // Parse the token
         $token = (new Parser())->parse($element[1]);
+        // Set the token into the request for use into the controller
         $request->attributes->set('jwt', $token);
 
-        return array(
+        // Return the credential
+        return [
             'username' => $token->getClaim('iss'),
             'token' => $token,
-        );
+        ];
     }
 
+    /**
+     * Return the user from credential read into getCredentials
+     */
     public function getUser($credentials, UserProviderInterface $userProvider)
     {
         return $userProvider->loadUserByUsername($credentials['username']);
@@ -46,24 +54,24 @@ class JWTokenAuthenticator extends AbstractGuardAuthenticator
 
     public function checkCredentials($credentials, UserInterface $user)
     {
-        // check credentials - e.g. make sure the password is valid
-        // return true to cause authentication success
-        
         $signer = new Sha256();
         $token = $credentials['token'];
-
+        // Check if the token signature is valid.
         if (!$token->verify($signer, new Key($user->getPassword()))) {
             $this->logger->info('Token invalid signature', ['iss'=>$token->getClaim('iss')]);
-            throw new AuthenticationException("Bad token", 1);
+            throw new AuthenticationException("Bad token", 403);
         }
+        // Valid the token data.
         $data = new ValidationData();
+        // Set the audience : URL of API service
         $data->setAudience('http://127.0.0.1:8000');
-        
+        // Check if datas is valid. Check date "not before", "not after", "created at"
         if (!$token->validate($data)) {
             $this->logger->info('Token invalid datas', ['iss'=>$token->getClaim('iss')]);
-            throw new AuthenticationException("Bad token", 1);
+            throw new AuthenticationException("Bad token", 403);
         }
-
+        // If all check is OK.
+        $this->logger->info('Allowed access by JWT token', ['iss'=>$token->getClaim('iss')]);
         return true;
     }
 
@@ -75,12 +83,9 @@ class JWTokenAuthenticator extends AbstractGuardAuthenticator
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception)
     {
-        $data = array(
+        $data = [
             'message' => strtr($exception->getMessageKey(), $exception->getMessageData()),
-
-            // or to translate this message
-            // $this->translator->trans($exception->getMessageKey(), $exception->getMessageData())
-        );
+        ];
 
         return new JsonResponse($data, 403);
     }
@@ -90,10 +95,9 @@ class JWTokenAuthenticator extends AbstractGuardAuthenticator
      */
     public function start(Request $request, AuthenticationException $authException = null)
     {
-        $data = array(
-            // you might translate this message
+        $data = [
             'message' => 'Authentication Required',
-        );
+        ];
 
         return new JsonResponse($data, 401);
     }
