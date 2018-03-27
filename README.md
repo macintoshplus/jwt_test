@@ -8,7 +8,7 @@ openssl rsa -in privkey.pem -outform PEM -pubout -out public.pem
 
 # Installation
 
-Use (composer)[https://getcomposer.org/] for install the dependencies.
+Use [composer](https://getcomposer.org/) for install the dependencies.
 
 ```
 php composer install -o
