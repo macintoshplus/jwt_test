@@ -1,6 +1,10 @@
 #!/usr/bin/env php
 <?php
-
+/**
+ * Test the JWT Token
+ * @copyright 2017-2018 Jean-Baptiste Nahan
+ * @license MIT
+ */
 require __DIR__.'/vendor/autoload.php';
 
 use Lcobucci\JWT\Builder;
