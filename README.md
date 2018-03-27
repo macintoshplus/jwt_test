@@ -6,6 +6,15 @@ openssl genrsa -des3 -out privkey.pem 2048
 openssl rsa -in privkey.pem -outform PEM -pubout -out public.pem
 ```
 
+# Installation
+
+Use (composer)[https://getcomposer.org/] for install the dependencies.
+
+```
+php composer install -o
+```
+
+
 # Single file
 
 The file `makeJwt.php` write an file named `token_<uniqid>` with the token JWT into.
