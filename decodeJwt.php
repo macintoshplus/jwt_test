@@ -5,7 +5,7 @@ require __DIR__.'/vendor/autoload.php';
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Signer\Rsa\Sha256;
 use Lcobucci\JWT\Signer\Keychain; // just to make our life simpler
-use Lcobucci\JWT\Signer\key;
+use Lcobucci\JWT\Signer\Key;
 use Lcobucci\JWT\Parser;
 
 $keychain = new Keychain();
