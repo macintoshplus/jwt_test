@@ -4,7 +4,7 @@ require __DIR__.'/vendor/autoload.php';
 
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Signer\Rsa\Sha256;
-use Lcobucci\JWT\Signer\key;
+use Lcobucci\JWT\Signer\Key;
 
 $key = new Key('file://'.__DIR__.'/privkey.pem', 'toto');
 $pubKey = new Key('file://'.__DIR__.'/public.pem');
