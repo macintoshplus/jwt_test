@@ -62,6 +62,16 @@ $issuer = $qh->ask($input, $output, $q);
 $q = new \Symfony\Component\Console\Question\Question("Type the Audience : \n");
 $audience = $qh->ask($input, $output, $q);
 
+$q = new \Symfony\Component\Console\Question\Question("Type the Id : \n", '4f1g23a12aa');
+$jwt_id = $qh->ask($input, $output, $q);
+
+$q = new \Symfony\Component\Console\Question\Question("Type the Uid : \n", '1');
+$jwt_uid = $qh->ask($input, $output, $q);
+
+
+$q = new \Symfony\Component\Console\Question\Question("Time to live (in second) : \n", 3600);
+$ttl = intval($qh->ask($input, $output, $q));
+
 
 $key = new Key('file://'.$privkeyFile, $secret);
 $pubKey = new Key('file://'.$publicKeyFile);
@@ -70,11 +80,11 @@ $signer = new Sha256();
 
 $token = (new Builder())->setIssuer($issuer) // Configures the issuer (iss claim)
                         ->setAudience($audience) // Configures the audience (aud claim)
-                        ->setId('4f1g23a12aa', true) // Configures the id (jti claim), replicating as a header item
+                        ->setId($jwt_id, true) // Configures the id (jti claim), replicating as a header item
                         ->setIssuedAt(time()) // Configures the time that the token was issue (iat claim)
                         ->setNotBefore(time() + 60) // Configures the time that the token can be used (nbf claim)
-                        ->setExpiration(time() + 3600) // Configures the expiration time of the token (nbf claim)
-                        ->set('uid', 1) // Configures a new claim, called "uid"
+                        ->setExpiration(time() + $ttl) // Configures the expiration time of the token (nbf claim)
+                        ->set('uid', $jwt_uid) // Configures a new claim, called "uid"
                         ->sign($signer, $key)
                         ->getToken(); // Retrieves the generated token
 $file = __DIR__.'/token_'.uniqid();
